@@ -18,6 +18,7 @@ import {
   XIcon,
   PinIcon,
   PinSlashIcon,
+  ShareIcon,
 } from "@primer/octicons-react";
 import SteamLogo from "@renderer/assets/steam-logo.svg?react";
 import {
@@ -30,7 +31,7 @@ import {
 } from "..";
 import { useGameCollections, useToast, useUserDetails } from "@renderer/hooks";
 import { useCollectionContextMenu } from "@renderer/context";
-import { getGameCollectionIds } from "@renderer/helpers";
+import { buildGameShareUri, getGameCollectionIds } from "@renderer/helpers";
 import type { GameCollection } from "@types";
 import type { GameContextMenuGame } from "./game-context-menu.types";
 
@@ -45,6 +46,24 @@ interface GameContextMenuProps extends Omit<ContextMenuProps, "items"> {
 }
 
 const FAVORITES_COLLECTION_ID = "__favorites__";
+
+function getShareLinkItems(
+  game: GameContextMenuGame,
+  label: string,
+  onClick: () => Promise<void>,
+  disabled: boolean
+): ContextMenuItemData[] {
+  if (game.shop === "custom") return [];
+  return [
+    {
+      id: "share-link",
+      label,
+      icon: <ShareIcon size={16} />,
+      onClick,
+      disabled,
+    },
+  ];
+}
 
 export function GameContextMenu({
   game,
@@ -174,6 +193,18 @@ export function GameContextMenu({
     }
   };
 
+  const handleShareLink = async () => {
+    if (game.shop === "custom") return;
+    try {
+      await window.electron.clipboard.writeText(
+        buildGameShareUri({ shop: game.shop, objectId: game.objectId })
+      );
+      showSuccessToast(t("game_link_copied"));
+    } catch {
+      showErrorToast(t("game_link_copy_failed"));
+    }
+  };
+
   const collectionSubmenu: ContextMenuItemData[] = [
     {
       id: "favorite",
@@ -256,6 +287,7 @@ export function GameContextMenu({
       },
       disabled: isDeleting,
     },
+    ...getShareLinkItems(game, t("share_link"), handleShareLink, isDeleting),
     {
       id: "collection",
       label: t("collection"),

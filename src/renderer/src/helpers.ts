@@ -1,28 +1,28 @@
+import {
+  platformToRetroArchPlatform,
+  RETROARCH_PLATFORM_LABELS,
+} from "@shared";
 import type {
   EmulationCloudSave,
+  EmulationSavePlatform,
   EmulatorBinary,
   EmulatorSystem,
-  EmulationSavePlatform,
   GameShop,
   LibraryGame,
   SouvenirSort,
 } from "@types";
 
-import {
-  platformToRetroArchPlatform,
-  RETROARCH_PLATFORM_LABELS,
-} from "@shared";
-
 import Color from "color";
 import i18next from "i18next";
 import { v4 as uuidv4 } from "uuid";
 import { THEME_WEB_STORE_URL } from "./constants";
-import { levelDBService } from "./services/leveldb.service";
+import type { SkuRegion } from "./helpers/sku-region";
 import { logger } from "./logger";
 import type { LibraryCategory } from "./pages/library/category-filter";
 import type { SortOption } from "./pages/library/filter-options";
-import type { SkuRegion } from "./helpers/sku-region";
+import { levelDBService } from "./services/leveldb.service";
 
+export { buildGameShareUri } from "./helpers/build-game-share-uri";
 export {
   getRegionsFromSkus,
   getSkuRegion,
@@ -30,12 +30,12 @@ export {
   type SkuRegion,
 } from "./helpers/sku-region";
 
-// Pixel-art flag icons from R74n PixelFlags (https://r74n.com/pixelflags).
-import flagUS from "./assets/flags/us.png";
+import flagAsia from "./assets/flags/asia.png";
 import flagEU from "./assets/flags/eu.png";
 import flagJP from "./assets/flags/jp.png";
 import flagKR from "./assets/flags/kr.png";
-import flagAsia from "./assets/flags/asia.png";
+// Pixel-art flag icons from R74n PixelFlags (https://r74n.com/pixelflags).
+import flagUS from "./assets/flags/us.png";
 
 export const ensureArray = <T>(value: unknown, source: string): T[] => {
   if (Array.isArray(value)) return value as T[];

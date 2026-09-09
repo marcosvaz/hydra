@@ -1,3 +1,19 @@
+import { parseGameShareUri } from "../shared/game-share";
+import path from "node:path";
+import url from "node:url";
+import { electronApp, optimizer } from "@electron-toolkit/utils";
+import resources from "@locales";
+import {
+  clearGamesPlaytime,
+  DownloadOrchestrator,
+  emulators,
+  Lock,
+  logger,
+  PowerSaveBlockerManager,
+  SSEClient,
+  WindowManager,
+} from "@main/services";
+import type { GameShop, UserPreferences } from "@types";
 import {
   app,
   BrowserWindow,
@@ -8,27 +24,12 @@ import {
 } from "electron";
 import updater from "electron-updater";
 import i18n from "i18next";
-import path from "node:path";
-import url from "node:url";
-import { electronApp, optimizer } from "@electron-toolkit/utils";
-import {
-  logger,
-  clearGamesPlaytime,
-  WindowManager,
-  Lock,
-  PowerSaveBlockerManager,
-  DownloadOrchestrator,
-  SSEClient,
-  emulators,
-} from "@main/services";
-import resources from "@locales";
-import { PythonRPC } from "./services/python-rpc";
-import { db, gamesSublevel, levelKeys } from "./level";
-import { GameShop, UserPreferences } from "@types";
+import { lookupCachedPlatform } from "./events/library/get-library";
 import { launchGame, openClassicsGame } from "./helpers";
 import { refreshPortableShortcutLauncher } from "./helpers/shortcut-launch";
-import { lookupCachedPlatform } from "./events/library/get-library";
+import { db, gamesSublevel, levelKeys } from "./level";
 import { loadState } from "./main";
+import { PythonRPC } from "./services/python-rpc";
 
 crashReporter.start({
   uploadToServer: false,
@@ -270,6 +271,12 @@ const handleRunGame = async (shop: GameShop, objectId: string) => {
   });
 };
 
+const handleGameShareLink = (uri: string) => {
+  const route = parseGameShareUri(uri);
+  if (route) WindowManager.redirectToMainWindow(route);
+  else logger.warn("Invalid or unsupported game share link");
+};
+
 const handleDeepLinkPath = (uri?: string) => {
   if (!uri) return;
 
@@ -287,6 +294,11 @@ const handleDeepLinkPath = (uri?: string) => {
         });
       }
 
+      return;
+    }
+
+    if (url.host === "game") {
+      handleGameShareLink(uri);
       return;
     }
 

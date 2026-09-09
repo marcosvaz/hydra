@@ -1,3 +1,17 @@
+import { PencilIcon } from "@primer/octicons-react";
+import tvEffectVideo from "@renderer/assets/emulation/tv-effect.mp4";
+import cloudIconAnimated from "@renderer/assets/icons/cloud-animated.gif";
+import { cloudSyncContext, gameDetailsContext } from "@renderer/context";
+import {
+  CLASSICS_PS_PLATFORM_LABELS,
+  resolveClassicsBadge,
+} from "@renderer/helpers";
+import { useAppSelector, useLibrary, useUserDetails } from "@renderer/hooks";
+import {
+  EMULATOR_ICONS,
+  RETROARCH_EMULATOR_ICON,
+} from "@renderer/pages/settings/emulation/emulator-icons";
+import { AuthPage } from "@shared";
 import {
   useContext,
   useEffect,
@@ -6,36 +20,19 @@ import {
   useRef,
   useState,
 } from "react";
-import { PencilIcon } from "@primer/octicons-react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
-
-import { HeroPanel } from "./hero";
-import { DescriptionHeader } from "./description-header/description-header";
-import { GallerySlider } from "./gallery-slider/gallery-slider";
-import { Sidebar } from "./sidebar/sidebar";
-import { GameReviews } from "./game-reviews";
-import { ReviewPromptBanner } from "./review-prompt-banner";
-import { useReviewPrompt } from "./use-review-prompt";
-import { useUserReviewStatus } from "./use-user-review-status";
-import { GameLogo } from "./game-logo";
 import { CloudSaveWidget } from "./cloud-save-v2";
 import { getCloudSaveVisibility } from "./cloud-save-visibility";
-
-import { AuthPage } from "@shared";
-import { cloudSyncContext, gameDetailsContext } from "@renderer/context";
-
-import cloudIconAnimated from "@renderer/assets/icons/cloud-animated.gif";
-import tvEffectVideo from "@renderer/assets/emulation/tv-effect.mp4";
-import { useUserDetails, useLibrary, useAppSelector } from "@renderer/hooks";
-import {
-  CLASSICS_PS_PLATFORM_LABELS,
-  resolveClassicsBadge,
-} from "@renderer/helpers";
-import {
-  EMULATOR_ICONS,
-  RETROARCH_EMULATOR_ICON,
-} from "@renderer/pages/settings/emulation/emulator-icons";
+import { DescriptionHeader } from "./description-header/description-header";
+import { GallerySlider } from "./gallery-slider/gallery-slider";
+import { GameLogo } from "./game-logo";
+import { GameReviews } from "./game-reviews";
+import { HeroPanel } from "./hero";
+import { ReviewPromptBanner } from "./review-prompt-banner";
+import { Sidebar } from "./sidebar/sidebar";
+import { useReviewPrompt } from "./use-review-prompt";
+import { useUserReviewStatus } from "./use-user-review-status";
 import "./game-details.scss";
 import "./hero.scss";
 

@@ -175,6 +175,18 @@
     "calculating_eta_batch": "Downloading {{title}}… ({{percentage}} complete {{filesDownloaded}}/{{filesTotal}} files) - Calculating remaining time…"
   },
   "game_details": {
+    "share_link": "Partilhar ligação",
+    "shared_download_retry": "Atualizar opções",
+    "shared_download_loading": "A carregar a versão partilhada...",
+    "shared_by_friend": "Partilhado por um amigo",
+    "share_game": "Partilhar jogo",
+    "share_download_option": "Partilhar opção de transferência",
+    "game_link_copied": "Ligação do jogo copiada",
+    "game_link_copy_failed": "Não foi possível copiar a ligação",
+    "download_option_link_copied": "Ligação da opção de transferência copiada",
+    "shared_download_source_missing": "Não tens a fonte desta versão partilhada. Adiciona a fonte para encontrar a versão enviada pelo teu amigo.",
+    "shared_download_option_missing": "Esta versão ainda não está disponível. Se acabaste de adicionar a fonte, aguarda o processamento e atualiza as opções.",
+    "shared_download_load_failed": "Não foi possível carregar a versão partilhada. Atualiza as opções para tentar novamente.",
     "bios_not_configured_toast": "BIOS não encontrada. Adicione a pasta da BIOS nas definições de Emulação.",
     "retroarch_not_configured_toast": "RetroArch não configurado. Configure-o em Definições → Emulação.",
     "core_not_installed_toast": "Núcleo do emulador não instalado. Descarregue-o em Definições → Emulação.",

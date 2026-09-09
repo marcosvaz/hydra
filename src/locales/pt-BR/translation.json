@@ -212,6 +212,18 @@
     "calculating_eta_batch": "Downloading {{title}}… ({{percentage}} complete {{filesDownloaded}}/{{filesTotal}} files) - Calculating remaining time…"
   },
   "game_details": {
+    "share_link": "Compartilhar link",
+    "shared_download_retry": "Atualizar opções",
+    "shared_download_loading": "Carregando a versão compartilhada...",
+    "shared_by_friend": "Compartilhado por um amigo",
+    "share_game": "Compartilhar jogo",
+    "share_download_option": "Compartilhar opção de download",
+    "game_link_copied": "Link do jogo copiado",
+    "game_link_copy_failed": "Não foi possível copiar o link",
+    "download_option_link_copied": "Link da opção de download copiado",
+    "shared_download_source_missing": "Você não possui a fonte desta versão compartilhada. Adicione a fonte para encontrar a versão enviada pelo seu amigo.",
+    "shared_download_option_missing": "Esta versão ainda não está disponível. Se você acabou de adicionar a fonte, aguarde o processamento e atualize as opções.",
+    "shared_download_load_failed": "Não foi possível carregar a versão compartilhada. Atualize as opções para tentar novamente.",
     "bios_not_configured_toast": "BIOS não encontrada. Adicione a pasta da BIOS nas configurações de Emulação.",
     "open_download_options": "Ver opções de download",
     "download_options_zero": "Sem opções de download",

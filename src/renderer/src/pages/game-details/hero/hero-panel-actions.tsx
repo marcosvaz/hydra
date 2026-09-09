@@ -7,6 +7,7 @@ import {
   PinSlashIcon,
   PlayIcon,
   PlusCircleIcon,
+  ShareIcon,
 } from "@primer/octicons-react";
 import { Button, ConfirmationModal } from "@renderer/components";
 import { XCircle } from "lucide-react";
@@ -20,7 +21,10 @@ import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { gameDetailsContext } from "@renderer/context";
-import { handleClassicsLaunchError } from "@renderer/helpers";
+import {
+  buildGameShareUri,
+  handleClassicsLaunchError,
+} from "@renderer/helpers";
 import { DiscSelectionModal } from "../modals/disc-selection-modal";
 
 import "./hero-panel-actions.scss";
@@ -293,6 +297,33 @@ export function HeroPanelActions() {
 
   const deleting = game ? isGameDeleting(game?.id) : false;
 
+  const handleShareGameClick = async () => {
+    if (!shop || !objectId || shop === "custom") return;
+
+    try {
+      await window.electron.clipboard.writeText(
+        buildGameShareUri({ shop, objectId })
+      );
+      showSuccessToast(t("game_link_copied"));
+    } catch {
+      showErrorToast(t("game_link_copy_failed"));
+    }
+  };
+
+  const shareGameButton = shop !== "custom" && objectId && (
+    <Button
+      type="button"
+      onClick={handleShareGameClick}
+      theme="outline"
+      disabled={deleting}
+      className="hero-panel-actions__action"
+      title={t("share_game")}
+      aria-label={t("share_game")}
+    >
+      <ShareIcon />
+    </Button>
+  );
+
   const addGameToLibraryButton = (
     <Button
       theme="outline"
@@ -382,6 +413,7 @@ export function HeroPanelActions() {
       <>
         {addGameToLibraryButton}
         {showDownloadOptionsButton}
+        {shareGameButton}
       </>
     );
   }
@@ -410,6 +442,8 @@ export function HeroPanelActions() {
             {game.isPinned ? <PinSlashIcon /> : <PinIcon />}
           </Button>
         )}
+
+        {shareGameButton}
 
         <Button
           onClick={() => {
@@ -454,5 +488,10 @@ export function HeroPanelActions() {
     );
   }
 
-  return addGameToLibraryButton;
+  return (
+    <>
+      {addGameToLibraryButton}
+      {shareGameButton}
+    </>
+  );
 }

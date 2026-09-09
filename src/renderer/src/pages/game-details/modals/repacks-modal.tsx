@@ -1,30 +1,37 @@
-import { useContext, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { AddDownloadSourceModal } from "../../settings/add-download-source-modal";
+import { useSharedRepack } from "./use-shared-repack";
+import { SharedRepackNotice } from "./shared-repack-notice";
+import { logger } from "@renderer/logger";
 import {
-  PlusCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  LinkIcon,
+  PlusCircleIcon,
 } from "@primer/octicons-react";
-import { Tooltip } from "react-tooltip";
-
 import {
   Badge,
   Button,
+  CheckboxField,
   Modal,
   TextField,
-  CheckboxField,
 } from "@renderer/components";
-import type { DownloadSource, Game, GameRepack } from "@types";
-
-import { DownloadSettingsModal } from "./download-settings-modal";
 import { gameDetailsContext } from "@renderer/context";
-import { Downloader } from "@shared";
-import { orderBy } from "lodash-es";
-import { useDate, useAppDispatch, useAppSelector } from "@renderer/hooks";
 import { clearNewDownloadOptions } from "@renderer/features";
+import { buildGameShareUri, getGameKey } from "@renderer/helpers";
+import {
+  useAppDispatch,
+  useAppSelector,
+  useDate,
+  useToast,
+} from "@renderer/hooks";
 import { levelDBService } from "@renderer/services/leveldb.service";
-import { getGameKey } from "@renderer/helpers";
+import type { Downloader } from "@shared";
+import type { DownloadSource, Game, GameRepack } from "@types";
+import { orderBy } from "lodash-es";
+import { useContext, useEffect, useMemo, useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Tooltip } from "react-tooltip";
+import { DownloadSettingsModal } from "./download-settings-modal";
 import "./repacks-modal.scss";
 
 export interface RepacksModalProps {
@@ -65,28 +72,58 @@ export function RepacksModal({
     new Set()
   );
 
-  const { game, repacks } = useContext(gameDetailsContext);
+  const { showSuccessToast, showErrorToast } = useToast();
+
+  const { game, repacks, shop, objectId, refreshDownloadOptions } =
+    useContext(gameDetailsContext);
+  const [sourcesLoaded, setSourcesLoaded] = useState(false);
+  const [sourcesFailed, setSourcesFailed] = useState(false);
+  const [showAddSourceModal, setShowAddSourceModal] = useState(false);
+  const { target, status, sharedRepack } = useSharedRepack(
+    downloadSources,
+    sourcesLoaded,
+    sourcesFailed
+  );
 
   const { t } = useTranslation("game_details");
 
   const { formatDate } = useDate();
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const userPreferences = useAppSelector(
     (state) => state.userPreferences.value
   );
 
-  useEffect(() => {
-    const fetchDownloadSources = async () => {
+  const refreshSources = useCallback(async () => {
+    setSourcesLoaded(false);
+    setSourcesFailed(false);
+    try {
       const sources = (await levelDBService.values(
         "downloadSources"
       )) as DownloadSource[];
-      const sorted = orderBy(sources, "createdAt", "desc");
-      setDownloadSources(sorted);
-    };
-
-    fetchDownloadSources();
+      setDownloadSources(orderBy(sources, "createdAt", "desc"));
+    } catch (error) {
+      logger.error("Failed to refresh shared download sources", error);
+      setSourcesFailed(true);
+    } finally {
+      setSourcesLoaded(true);
+    }
   }, []);
+
+  useEffect(() => {
+    void refreshSources();
+  }, [refreshSources]);
+
+  useEffect(() => {
+    if (!target) return;
+    setFilterTerm("");
+    setSelectedFingerprints([]);
+    setShowSelectFolderModal(false);
+  }, [target]);
+
+  const refreshSharedOptions = () => {
+    void refreshSources();
+    refreshDownloadOptions();
+  };
 
   useEffect(() => {
     const fetchLastCheckTimestamp = async () => {
@@ -141,8 +178,15 @@ export function RepacksModal({
   }, [visible, game, dispatch]);
 
   const sortedRepacks = useMemo(() => {
-    return orderBy(repacks, [(repack) => repack.uploadDate], ["desc"]);
-  }, [repacks]);
+    return orderBy(
+      repacks,
+      [
+        (repack) => repack.id === sharedRepack?.id,
+        (repack) => repack.uploadDate,
+      ],
+      ["desc", "desc"]
+    );
+  }, [repacks, sharedRepack?.id]);
 
   const getRepackAvailabilityStatus = (
     repack: GameRepack
@@ -188,6 +232,33 @@ export function RepacksModal({
     setRepack(repack);
     setShowSelectFolderModal(true);
     setViewedRepackIds((prev) => new Set(prev).add(repack.id));
+  };
+
+  const handleShareRepack = async (repack: GameRepack) => {
+    if (!objectId || shop === "custom") {
+      return;
+    }
+
+    const shareUri = buildGameShareUri({
+      shop,
+      objectId,
+      sourceId: repack.downloadSourceId,
+      repackId: repack.id,
+      sourceUrl: downloadSources.find(
+        (source) => source.id === repack.downloadSourceId
+      )?.url,
+    });
+
+    try {
+      await window.electron.clipboard.writeText(shareUri);
+
+      showSuccessToast(
+        t("download_option_link_copied"),
+        `${repack.title} — ${repack.downloadSourceName}`
+      );
+    } catch {
+      showErrorToast(t("game_link_copy_failed"));
+    }
   };
 
   const handleFilter: React.ChangeEventHandler<HTMLInputElement> = (event) => {
@@ -244,6 +315,12 @@ export function RepacksModal({
 
   return (
     <>
+      <AddDownloadSourceModal
+        visible={showAddSourceModal}
+        initialSourceUrl={target?.sourceUrl ?? ""}
+        onClose={() => setShowAddSourceModal(false)}
+        onAddDownloadSource={refreshSharedOptions}
+      />
       <DownloadSettingsModal
         visible={showSelectFolderModal}
         onClose={() => setShowSelectFolderModal(false)}
@@ -313,6 +390,11 @@ export function RepacksModal({
           </div>
         </div>
 
+        <SharedRepackNotice
+          status={status}
+          onAddSource={() => setShowAddSourceModal(true)}
+          onRetry={refreshSharedOptions}
+        />
         <div className="repacks-modal__repacks">
           {filteredRepacks.length === 0 ? (
             <div className="repacks-modal__no-results">
@@ -325,8 +407,7 @@ export function RepacksModal({
                     type="button"
                     theme="primary"
                     onClick={() => {
-                      onClose();
-                      navigate("/settings?tab=download_sources");
+                      setShowAddSourceModal(true);
                     }}
                   >
                     <PlusCircleIcon />
@@ -343,39 +424,61 @@ export function RepacksModal({
               const tooltipId = `availability-orb-${repack.id}`;
 
               return (
-                <Button
+                <div
                   key={repack.id}
-                  theme="dark"
-                  onClick={() => handleRepackClick(repack)}
-                  className="repacks-modal__repack-button"
+                  className={`repacks-modal__repack-row ${repack.id === sharedRepack?.id ? "repacks-modal__repack-row--shared" : ""}`}
                 >
-                  <span
-                    className={`repacks-modal__availability-orb repacks-modal__availability-orb--${availabilityStatus}`}
-                    data-tooltip-id={tooltipId}
-                    data-tooltip-content={t(`source_${availabilityStatus}`)}
-                  />
-                  <Tooltip id={tooltipId} />
+                  <Button
+                    theme="dark"
+                    onClick={() => handleRepackClick(repack)}
+                    className="repacks-modal__repack-button"
+                  >
+                    <span
+                      className={`repacks-modal__availability-orb repacks-modal__availability-orb--${availabilityStatus}`}
+                      data-tooltip-id={tooltipId}
+                      data-tooltip-content={t(`source_${availabilityStatus}`)}
+                    />
+                    <Tooltip id={tooltipId} />
 
-                  <p className="repacks-modal__repack-title">
-                    {repack.title}
-                    {userPreferences?.enableNewDownloadOptionsBadges !==
-                      false &&
-                      isNewRepack(repack) && (
-                        <span className="repacks-modal__new-badge">
-                          {t("new_download_option")}
-                        </span>
-                      )}
-                  </p>
+                    <p className="repacks-modal__repack-title">
+                      {repack.title}
+                      {userPreferences?.enableNewDownloadOptionsBadges !==
+                        false &&
+                        isNewRepack(repack) && (
+                          <span className="repacks-modal__new-badge">
+                            {t("new_download_option")}
+                          </span>
+                        )}
+                    </p>
 
-                  {isLastDownloadedOption && (
-                    <Badge>{t("last_downloaded_option")}</Badge>
+                    {repack.id === sharedRepack?.id && (
+                      <Badge>{t("shared_by_friend")}</Badge>
+                    )}
+
+                    {isLastDownloadedOption && (
+                      <Badge>{t("last_downloaded_option")}</Badge>
+                    )}
+
+                    <p className="repacks-modal__repack-info">
+                      {repack.fileSize} - {repack.downloadSourceName} -{" "}
+                      {repack.uploadDate ? formatDate(repack.uploadDate) : ""}
+                    </p>
+                  </Button>
+                  {shop !== "custom" && objectId && (
+                    <Button
+                      type="button"
+                      theme="dark"
+                      onClick={() => handleShareRepack(repack)}
+                      title={t("share_download_option")}
+                      aria-label={
+                        t("share_download_option") + ": " + repack.title
+                      }
+                      className="repacks-modal__share-button"
+                    >
+                      <LinkIcon size={16} />
+                    </Button>
                   )}
-
-                  <p className="repacks-modal__repack-info">
-                    {repack.fileSize} - {repack.downloadSourceName} -{" "}
-                    {repack.uploadDate ? formatDate(repack.uploadDate) : ""}
-                  </p>
-                </Button>
+                </div>
               );
             })
           )}

@@ -1,6 +1,41 @@
 @use "../../../scss/globals.scss";
 
 .repacks-modal {
+  &__shared-notice {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: globals.$spacing-unit;
+    padding: calc(globals.$spacing-unit * 2);
+    margin-bottom: calc(globals.$spacing-unit * 2);
+    border: 1px solid globals.$muted-color;
+    border-radius: 8px;
+    background: var(--color-background-light);
+
+    p {
+      flex-basis: 100%;
+      margin: 0;
+    }
+  }
+
+  &__repack-row--shared {
+    border-radius: 8px;
+    outline: 1px solid globals.$muted-color;
+    outline-offset: 2px;
+  }
+
+  &__repack-row {
+    display: flex;
+    gap: globals.$spacing-unit;
+    > .repacks-modal__repack-button {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+  &__share-button {
+    flex-shrink: 0;
+  }
+
   &__filter-container {
     transition: all 0.3s ease;
   }

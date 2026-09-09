@@ -1,3 +1,10 @@
+export {
+  findSharedRepack,
+  getSharedSourceUrl,
+  getSharedRepackStatus,
+} from "./game-share";
+export type { SharedRepackTarget } from "./game-share";
+
 import {
   ptBR,
   enUS,

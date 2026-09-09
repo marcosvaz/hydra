@@ -15,6 +15,7 @@ interface AddDownloadSourceModalProps {
   visible: boolean;
   onClose: () => void;
   onAddDownloadSource: () => void;
+  initialSourceUrl?: string;
 }
 
 interface FormValues {
@@ -25,6 +26,7 @@ export function AddDownloadSourceModal({
   visible,
   onClose,
   onAddDownloadSource,
+  initialSourceUrl,
 }: Readonly<AddDownloadSourceModalProps>) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -46,6 +48,7 @@ export function AddDownloadSourceModal({
   });
 
   const { sourceUrl } = useContext(settingsContext);
+  const prefilledSourceUrl = initialSourceUrl ?? sourceUrl;
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -76,10 +79,10 @@ export function AddDownloadSourceModal({
     clearErrors();
     setIsLoading(false);
 
-    if (sourceUrl) {
-      setValue("url", sourceUrl);
+    if (prefilledSourceUrl) {
+      setValue("url", prefilledSourceUrl);
     }
-  }, [visible, clearErrors, setValue, sourceUrl]);
+  }, [visible, clearErrors, setValue, prefilledSourceUrl]);
 
   const handleClose = () => {
     if (isLoading) return;

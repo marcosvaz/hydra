@@ -78,6 +78,7 @@ export default function GameDetails() {
 
   return (
     <GameDetailsContextProvider
+      key={`${shop}:${objectId}`}
       gameTitle={gameTitle!}
       shop={shop! as GameShop}
       objectId={objectId!}

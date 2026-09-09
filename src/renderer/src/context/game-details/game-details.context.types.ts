@@ -21,6 +21,9 @@ export interface GameDetailsContext {
   game: LibraryGame | null;
   shopDetails: ShopDetailsWithAssets | null;
   repacks: GameRepack[];
+  isLoadingRepacks: boolean;
+  repacksLoadFailed: boolean;
+  refreshDownloadOptions: () => void;
   shop: GameShop;
   gameTitle: string;
   isGameRunning: boolean;

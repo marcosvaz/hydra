@@ -38,6 +38,9 @@ export const gameDetailsContext = createContext<GameDetailsContext>({
   game: null,
   shopDetails: null,
   repacks: [],
+  isLoadingRepacks: true,
+  repacksLoadFailed: false,
+  refreshDownloadOptions: () => {},
   shop: "steam",
   gameTitle: "",
   isGameRunning: false,
@@ -100,10 +103,20 @@ export function GameDetailsContextProvider({
   const [showGameOptionsModal, setShowGameOptionsModal] = useState(false);
   const [gameOptionsInitialCategory, setGameOptionsInitialCategory] =
     useState<GameOptionsCategoryId>("general");
+  const [isLoadingRepacks, setIsLoadingRepacks] = useState(true);
+  const [repacksLoadFailed, setRepacksLoadFailed] = useState(false);
+  const [downloadOptionsRevision, setDownloadOptionsRevision] = useState(0);
+  const refreshDownloadOptions = useCallback(() => {
+    setIsLoadingRepacks(true);
+    setDownloadOptionsRevision((revision) => revision + 1);
+  }, []);
   const [repacks, setRepacks] = useState<GameRepack[]>([]);
 
   const { t, i18n } = useTranslation("game_details");
   const location = useLocation();
+  const initialSharedRepackId = useRef(
+    new URLSearchParams(location.search).get("repackId")
+  );
 
   const dispatch = useAppDispatch();
 
@@ -409,8 +422,10 @@ export function GameDetailsContextProvider({
   }, [objectId, shop, userDetails]);
 
   useEffect(() => {
+    setRepacks([]);
+    setIsLoadingRepacks(shop !== "custom");
+    setRepacksLoadFailed(false);
     if (shop === "custom") return;
-
     let cancelled = false;
 
     const fetchDownloadSources = async () => {
@@ -441,6 +456,37 @@ export function GameDetailsContextProvider({
           `/games/${shop}/${objectId}/download-sources`
         );
 
+        // Shared releases can be older than the first page of download options.
+        let pageSize = downloadOptions.length;
+        while (
+          initialSharedRepackId.current &&
+          pageSize === params.take &&
+          !downloadOptions.some(
+            (option) => option.id === initialSharedRepackId.current
+          )
+        ) {
+          params.skip += params.take;
+          const page = ensureArray<GameRepack>(
+            await window.electron.hydraApi.get<GameRepack[]>(
+              `/games/${shop}/${objectId}/download-sources`,
+              { params, needsAuth: false }
+            ),
+            `/games/${shop}/${objectId}/download-sources`
+          );
+          if (cancelled) return;
+          const existingIds = new Set(
+            downloadOptions.map((option) => option.id)
+          );
+          const newOptions = page.filter(
+            (option) => !existingIds.has(option.id)
+          );
+          if (page.length && !newOptions.length) {
+            throw new Error("Download source pagination did not advance");
+          }
+          downloadOptions.push(...newOptions);
+          pageSize = page.length;
+        }
+
         setRepacks(downloadOptions);
 
         const results = await fetchHosterAvailability(
@@ -453,7 +499,10 @@ export function GameDetailsContextProvider({
 
         setRepacks(applyHosterAvailability(downloadOptions, results));
       } catch (error) {
+        if (!cancelled) setRepacksLoadFailed(true);
         console.error("Failed to fetch download sources:", error);
+      } finally {
+        if (!cancelled) setIsLoadingRepacks(false);
       }
     };
 
@@ -462,7 +511,7 @@ export function GameDetailsContextProvider({
     return () => {
       cancelled = true;
     };
-  }, [shop, objectId]);
+  }, [shop, objectId, downloadOptionsRevision]);
 
   const getDownloadsPath = async () => {
     if (userPreferences?.downloadsPath) return userPreferences.downloadsPath;
@@ -509,6 +558,9 @@ export function GameDetailsContextProvider({
         shopDetails,
         shop,
         repacks,
+        isLoadingRepacks,
+        repacksLoadFailed,
+        refreshDownloadOptions,
         gameTitle,
         isGameRunning,
         isLoading,

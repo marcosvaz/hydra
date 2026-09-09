@@ -246,6 +246,18 @@
     "platforms": "Platforms"
   },
   "game_details": {
+    "share_link": "Share link",
+    "shared_download_retry": "Refresh options",
+    "shared_download_loading": "Loading shared download option...",
+    "shared_by_friend": "Shared by friend",
+    "share_game": "Share game",
+    "share_download_option": "Share download option",
+    "game_link_copied": "Game link copied",
+    "game_link_copy_failed": "Could not copy the link",
+    "download_option_link_copied": "Download option link copied",
+    "shared_download_source_missing": "You do not have the source for this shared version. Add the source to find the version shared by your friend.",
+    "shared_download_option_missing": "This version is not available yet. If you just added the source, wait for processing and refresh the options.",
+    "shared_download_load_failed": "Could not load the shared version. Please refresh the options to try again.",
     "bios_not_configured_toast": "BIOS not found. Please add BIOS folder in Emulation settings.",
     "open_download_options": "Open download options",
     "download_options_zero": "No download option",
